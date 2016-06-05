@@ -1,4 +1,4 @@
-package com.example.sugano_junpei.steelchallengetimer;
+package club.android.steelchallengetimer;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

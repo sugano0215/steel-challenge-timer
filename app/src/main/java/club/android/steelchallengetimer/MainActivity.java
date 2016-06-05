@@ -1,18 +1,17 @@
-package com.example.sugano_junpei.steelchallengetimer;
+package club.android.steelchallengetimer;
 
-import android.content.Context;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
-import android.media.AudioRecord;
 import android.media.ToneGenerator;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+
+import club.android.steelchallengetimer.R;
 
 public class MainActivity extends AppCompatActivity implements Runnable, View.OnClickListener {
 
