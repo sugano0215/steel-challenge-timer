@@ -8,10 +8,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
+
 
 import java.text.SimpleDateFormat;
 
-import club.android.steelchallengetimer.R;
 
 public class MainActivity extends AppCompatActivity implements Runnable, View.OnClickListener {
 
@@ -19,14 +22,16 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
     // 10 msec order
     private int period = 10;
     private int derayTime = 2000;
-
+    private int SAMPLE_RATE = 44100;
+    private double baseValue;
     private TextView timerText;
     private Button startButton, stopButton, resetButton;
 
     private Thread thread = null;
     private final Handler handler = new Handler();
     private volatile boolean stopRun = false;
-
+    private int bufferSize;
+    private AudioRecord audioRecord;
     private SimpleDateFormat dataFormat = new SimpleDateFormat("mm:ss.SS");
 
 
@@ -37,17 +42,25 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
 
         timerText = (TextView) findViewById(R.id.timer);
         timerText.setText(dataFormat.format(0));
-
         startButton = (Button) findViewById(R.id.start_button);
         stopButton = (Button) findViewById(R.id.stop_button);
         resetButton = (Button) findViewById(R.id.reset_button);
 
 
         startButton.setOnClickListener(this);
+        // @todo あとで消す
         stopButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
         stopButton.setEnabled(false);
         resetButton.setEnabled(false);
+        bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+        baseValue = 12.0;
+        audioRecord.stop();
     }
 
     @Override
@@ -55,7 +68,9 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
         if (v == startButton) {
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
+            resetButton.setEnabled(true);
             stopRun = false;
+            audioRecord.startRecording();
             thread = new Thread(this);
             thread.start();
             startTime = System.currentTimeMillis();
@@ -85,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
         ToneGenerator toneGenerator
                 = new ToneGenerator(AudioManager.STREAM_SYSTEM, ToneGenerator.MAX_VOLUME);
         toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP);
+        short[] buffer = new short[bufferSize];
         while (!stopRun) {
             // sleep: period msec
             try {
@@ -93,7 +109,18 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
                 e.printStackTrace();
                 stopRun = true;
             }
+            int read = audioRecord.read(buffer, 0, bufferSize);
+            if (read < 0) {
+                throw new IllegalStateException();
+            }
 
+            int maxValue = 0;
+            for (int i = 0; i < read; i++) {
+                maxValue = Math.max(maxValue, buffer[i]);
+            }
+
+            final double db = 20.0 * Math.log10(maxValue / baseValue);
+            System.out.println(db);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -102,13 +129,15 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
                     long diffTime = (endTime - startTime);
 
                     timerText.setText(dataFormat.format(diffTime));
-
-
                 }
             });
+            // @todo dbの値の決め方とifの条件は調整する
+            if(db > 68){
+                audioRecord.stop();
+                stopRun = true;
+                thread = null;
+            }
         }
     }
 
-    private class OnReachedVolumeListener {
-    }
 }
