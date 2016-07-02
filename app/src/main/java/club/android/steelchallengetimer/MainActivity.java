@@ -72,6 +72,15 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
             stopRun = false;
             audioRecord.startRecording();
             thread = new Thread(this);
+            try {
+                Thread.sleep(derayTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                stopRun = true;
+            }
+            ToneGenerator toneGenerator
+                    = new ToneGenerator(AudioManager.STREAM_SYSTEM, ToneGenerator.MAX_VOLUME);
+            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP);
             thread.start();
             startTime = System.currentTimeMillis();
         } else if (v == stopButton) {
@@ -91,15 +100,6 @@ public class MainActivity extends AppCompatActivity implements Runnable, View.On
     @Override
     public void run() {
         // startが押された時2秒間待つ
-        try {
-            Thread.sleep(derayTime);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            stopRun = true;
-        }
-        ToneGenerator toneGenerator
-                = new ToneGenerator(AudioManager.STREAM_SYSTEM, ToneGenerator.MAX_VOLUME);
-        toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP);
         short[] buffer = new short[bufferSize];
         while (!stopRun) {
             // sleep: period msec
