@@ -28,8 +28,8 @@
         android:layout_height="wrap_content" />
 
     <Button
-        android:text="Reset"
-        android:id="@+id/reset_button"
+        android:text="設定"
+        android:id="@+id/config_button"
         android:layout_margin="10dp"
         android:layout_width="323dp"
         android:layout_height="wrap_content" />
