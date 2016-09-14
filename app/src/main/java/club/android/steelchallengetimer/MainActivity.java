@@ -26,8 +26,9 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     private int SAMPLE_RATE = 44100;
     public static final int CALL_RESULT_CODE = 100;
     private double baseValue;
+    private int Value;
     private TextView timerText;
-    private Button startButton, stopButton, configButton;
+    private Button startButton, stopButton, configButton, resetButton;
 
     private Thread thread = null;
     private final Handler handler = new Handler();
@@ -47,20 +48,22 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
         startButton = (Button) findViewById(R.id.start_button);
         stopButton = (Button) findViewById(R.id.stop_button);
         configButton = (Button) findViewById(R.id.config_button);
+        resetButton = (Button) findViewById(R.id.reset_button);
 
         startButton.setOnClickListener(this);
         // @todo あとで消す
         stopButton.setOnClickListener(this);
         configButton.setOnClickListener(this);
+        resetButton.setOnClickListener(this);
         stopButton.setEnabled(false);
-        configButton.setEnabled(false);
+        resetButton.setEnabled(false);
         bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT, bufferSize);
-        baseValue = 15.0;
+        baseValue = 12.0;
         audioRecord.stop();
     }
 
@@ -96,6 +99,23 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             intent.putExtra("baseValue", baseValue);
             // startActivityで起動する
             startActivityForResult(intent, CALL_RESULT_CODE);
+        } else {
+            resetButton.setEnabled(false);
+            stopButton.setEnabled(false);
+            startButton.setEnabled(true);
+            timerText.setText(dataFormat.format(0));
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == CALL_RESULT_CODE){
+            if(resultCode == Activity.RESULT_OK){
+                // subActivityから受け取ったtextを表示
+                int value = data.getIntExtra("value", 50);
+                Value = value;
+            }
         }
     }
 
@@ -122,7 +142,6 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             }
 
             final double db = 20.0 * Math.log10(maxValue / baseValue);
-            System.out.println(db);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -134,7 +153,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                 }
             });
             // @todo dbの値の決め方とifの条件は調整する
-            if(db > 68){
+            if(db > Value){
                 audioRecord.stop();
                 stopRun = true;
                 thread = null;

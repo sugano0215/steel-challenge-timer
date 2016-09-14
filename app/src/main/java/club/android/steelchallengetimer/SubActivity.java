@@ -1,13 +1,55 @@
 package club.android.steelchallengetimer;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 public class SubActivity extends AppCompatActivity {
+
+    private TextView textView;
+    private SeekBar seekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
+
+        textView = (TextView) findViewById(R.id.textView);
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        // 初期値
+        seekBar.setProgress(0);
+        // 最大値
+        seekBar.setMax(100);
+        seekBar.setOnSeekBarChangeListener(
+                new SeekBar.OnSeekBarChangeListener() {
+                    // トグルがドラッグされると呼ばれる
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar,
+                                                  int progress, boolean fromUser) {
+                        textView.setText(String.valueOf(progress));
+                    }
+
+                    // トグルがタッチされた時に呼ばれる
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                    }
+
+                    // トグルがリリースされた時に呼ばれる
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                    }
+
+                });
+        // リスナーのセット
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent data = new Intent();
+                data.putExtra("value", seekBar.getProgress());
+                setResult(RESULT_OK, data);
+                finish();
+            }
+        });
     }
 }
