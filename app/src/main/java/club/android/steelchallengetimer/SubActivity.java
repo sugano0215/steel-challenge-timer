@@ -16,20 +16,19 @@ public class SubActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub);
-
+        Intent intent = getIntent();
         textView = (TextView) findViewById(R.id.textView);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         // 初期値
-        seekBar.setProgress(0);
-        // 最大値
-        seekBar.setMax(100);
+        seekBar.setProgress(intent.getIntExtra("value", 5));
+        textView.setText(String.valueOf(seekBar.getProgress()+50));
         seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
                     // トグルがドラッグされると呼ばれる
                     @Override
                     public void onProgressChanged(SeekBar seekBar,
                                                   int progress, boolean fromUser) {
-                        textView.setText(String.valueOf(progress));
+                        textView.setText(String.valueOf(progress+50));
                     }
 
                     // トグルがタッチされた時に呼ばれる

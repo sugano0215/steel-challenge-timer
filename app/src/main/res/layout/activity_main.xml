@@ -10,10 +10,9 @@
     <TextView
         android:id="@+id/timer"
         android:layout_margin="20dp"
-        android:textSize="60sp"
+        android:textSize="50sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
-
     <Button
         android:text="Start"
         android:id="@+id/start_button"

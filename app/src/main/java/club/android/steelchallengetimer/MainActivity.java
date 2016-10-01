@@ -23,10 +23,10 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     // 10 msec order
     private int period = 10;
     private int derayTime = 2000;
-    private int SAMPLE_RATE = 44100;
+    private int SAMPLE_RATE = 22050;
     public static final int CALL_RESULT_CODE = 100;
     private double baseValue;
-    private int Value;
+    private int Value = 5;
     private TextView timerText;
     private Button startButton, stopButton, configButton, resetButton;
 
@@ -35,7 +35,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     private volatile boolean stopRun = false;
     private int bufferSize;
     private AudioRecord audioRecord;
-    private SimpleDateFormat dataFormat = new SimpleDateFormat("mm:ss.SS");
+    private SimpleDateFormat dataFormat = new SimpleDateFormat("mm:ss.SSS");
 
 
     @Override
@@ -56,7 +56,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
         configButton.setOnClickListener(this);
         resetButton.setOnClickListener(this);
         stopButton.setEnabled(false);
-        resetButton.setEnabled(false);
+        resetButton.setEnabled(true);
         bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
@@ -73,6 +73,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             configButton.setEnabled(true);
+            resetButton.setEnabled(false);
             stopRun = false;
             audioRecord.startRecording();
             thread = new Thread(this);
@@ -84,24 +85,24 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             }
             ToneGenerator toneGenerator
                     = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
-            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ABBR_ALERT);
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP);
             thread.start();
             startTime = System.currentTimeMillis();
         } else if (v.getId() == R.id.stop_button) {
             startButton.setEnabled(false);
             stopButton.setEnabled(false);
             configButton.setEnabled(true);
+            resetButton.setEnabled(true);
             stopRun = true;
             thread = null;
         } else if (v.getId() == R.id.config_button){
             // 設定画面の呼び出し用
             Intent intent = new Intent(this, SubActivity.class);
-            intent.putExtra("baseValue", baseValue);
+            intent.putExtra("value", Value);
             // startActivityで起動する
             startActivityForResult(intent, CALL_RESULT_CODE);
         } else {
-            resetButton.setEnabled(false);
-            stopButton.setEnabled(false);
+            stopButton.setEnabled(true);
             startButton.setEnabled(true);
             timerText.setText(dataFormat.format(0));
         }
@@ -113,7 +114,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
         if(requestCode == CALL_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK){
                 // subActivityから受け取ったtextを表示
-                int value = data.getIntExtra("value", 50);
+                int value = data.getIntExtra("value", 55);
                 Value = value;
             }
         }
@@ -135,26 +136,31 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             if (read < 0) {
                 throw new IllegalStateException();
             }
-
-            int maxValue = 0;
-            for (int i = 0; i < read; i++) {
-                maxValue = Math.max(maxValue, buffer[i]);
+            long sum = 0;
+            for(int i = 0; i < bufferSize; i++){
+                sum += Math.abs(buffer[i]);
             }
+            short avg = (short) (sum / bufferSize);
 
-            final double db = 20.0 * Math.log10(maxValue / baseValue);
+            final double db = 20.0 * Math.log10(avg / baseValue);
+            System.out.println(db);
+            System.out.println(avg);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     long endTime = System.currentTimeMillis();
                     // カウント時間 = 経過時間 - 開始時間
                     long diffTime = (endTime - startTime);
-
                     timerText.setText(dataFormat.format(diffTime));
                 }
             });
             // @todo dbの値の決め方とifの条件は調整する
-            if(db > Value){
+            if(db > Value + 50){
                 audioRecord.stop();
+                startButton.setEnabled(false);
+                stopButton.setEnabled(false);
+                configButton.setEnabled(true);
+                resetButton.setEnabled(true);
                 stopRun = true;
                 thread = null;
             }
