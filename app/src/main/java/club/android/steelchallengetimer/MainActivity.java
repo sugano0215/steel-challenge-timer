@@ -157,12 +157,17 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             // @todo dbの値の決め方とifの条件は調整する
             if(db > Value + 50){
                 audioRecord.stop();
-                startButton.setEnabled(false);
-                stopButton.setEnabled(false);
-                configButton.setEnabled(true);
-                resetButton.setEnabled(true);
                 stopRun = true;
                 thread = null;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        startButton.setEnabled(false);
+                        stopButton.setEnabled(false);
+                        configButton.setEnabled(true);
+                        resetButton.setEnabled(true);
+                    }
+                });
             }
         }
     }
