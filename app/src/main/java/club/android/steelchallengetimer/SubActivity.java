@@ -20,15 +20,15 @@ public class SubActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.textView);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         // 初期値
-        seekBar.setProgress(intent.getIntExtra("value", 5));
-        textView.setText(String.valueOf(seekBar.getProgress() + 45));
+        seekBar.setProgress(intent.getIntExtra("value", 60));
+        textView.setText(String.valueOf(seekBar.getProgress()));
         seekBar.setOnSeekBarChangeListener(
                 new SeekBar.OnSeekBarChangeListener() {
                     // トグルがドラッグされると呼ばれる
                     @Override
                     public void onProgressChanged(SeekBar seekBar,
                                                   int progress, boolean fromUser) {
-                        textView.setText(String.valueOf(progress + 45));
+                        textView.setText(String.valueOf(progress));
                     }
 
                     // トグルがタッチされた時に呼ばれる
