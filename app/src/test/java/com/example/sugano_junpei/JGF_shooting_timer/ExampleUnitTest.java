@@ -1,4 +1,4 @@
-package com.example.sugano_junpei.steelchallengetimer;
+package com.example.sugano_junpei.JGF_shooting_timer;
 
 import org.junit.Test;
 

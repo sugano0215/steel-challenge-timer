@@ -1,4 +1,4 @@
-package club.android.steelchallengetimer;
+package club.android.JGF_shooting_timer;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
