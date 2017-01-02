@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 
 
 import java.text.SimpleDateFormat;
@@ -25,7 +24,6 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     // 10 msec order
     private int period = 1;
     private int derayTime = 2000;
-    private int SAMPLE_RATE = 22050;
     public static final int CALL_RESULT_CODE = 100;
     private double baseValue;
     private int Value = 55;
@@ -37,7 +35,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     private volatile boolean stopRun = false;
     private int bufferSize;
     private AudioRecord audioRecord;
-    private SimpleDateFormat dataFormat = new SimpleDateFormat("mm:ss.SSS");
+    private SimpleDateFormat dataFormat = new SimpleDateFormat("mm:ss.SS");
 
 
     @Override
@@ -59,14 +57,38 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
         resetButton.setOnClickListener(this);
         stopButton.setEnabled(false);
         resetButton.setEnabled(true);
-        bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, bufferSize);
-        baseValue = 12.0;
-        audioRecord.stop();
+        try {
+            audioRecord = getAudioRecord();
+            baseValue = 12.0;
+            audioRecord.stop();
+        } catch (Exception e) {
+
+        }
+    }
+
+    private AudioRecord getAudioRecord() {
+        for (int rate : new int[]{44100, 22050, 16000, 11025, 8000}) {
+            for (short audioFormat : new short[]{AudioFormat.ENCODING_PCM_8BIT, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_DEFAULT}) {
+                for (short channelConfig : new short[]{AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO}) {
+                    int i = 0;
+                    try {
+                        int buffSize = AudioRecord.getMinBufferSize(rate, channelConfig, audioFormat);
+                        if (buffSize != AudioRecord.ERROR_BAD_VALUE) {
+                            for(int audioSource : new int[]{0,1,5,6,7}){
+                                AudioRecord recorder = new AudioRecord(audioSource, rate, channelConfig, audioFormat, buffSize);
+                                if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
+                                    bufferSize = buffSize;
+                                    return recorder;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println(rate+ "で" +"ダメだったよ" + audioFormat);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -97,7 +119,7 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
             resetButton.setEnabled(true);
             stopRun = true;
             thread = null;
-        } else if (v.getId() == R.id.config_button){
+        } else if (v.getId() == R.id.config_button) {
             // 設定画面の呼び出し用
             stopButton.setEnabled(true);
             startButton.setEnabled(true);
@@ -122,8 +144,8 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == CALL_RESULT_CODE){
-            if(resultCode == Activity.RESULT_OK){
+        if (requestCode == CALL_RESULT_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
                 // subActivityから受け取ったtextを表示
                 int value = data.getIntExtra("value", 55);
                 Value = value;
@@ -148,13 +170,12 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                 throw new IllegalStateException();
             }
             long sum = 0;
-            for(int i = 0; i < bufferSize; i++){
+            for (int i = 0; i < bufferSize; i++) {
                 sum += Math.abs(buffer[i]);
             }
             short avg = (short) (sum / bufferSize);
 
             final double db = 20.0 * Math.log10(avg / baseValue);
-            System.out.println(db);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -164,8 +185,9 @@ public class MainActivity extends Activity implements Runnable, View.OnClickList
                     timerText.setText(dataFormat.format(diffTime));
                 }
             });
+             System.out.println(db);
             // @todo dbの値の決め方とifの条件は調整する
-            if(db > Value || diffTime > 30000){
+            if (db > Value || diffTime > 30000) {
                 audioRecord.stop();
                 stopRun = true;
                 thread = null;
